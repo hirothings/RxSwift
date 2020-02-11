@@ -13,10 +13,21 @@ import RxSwift
  */
 playgroundShouldContinueIndefinitely()
 
-example("Try yourself") {
-  // let disposeBag = DisposeBag()
-  _ = Observable.just("Hello, RxSwift!")
-    .debug("Observable")
+let observable1 = Observable.of("🐶", "🐱", "🐭", "🐹")
+let observable2 = Observable.of(1, 2, 3, 4, 5)
+
+example("zipとcombineLatestの違い") {
+    Observable.zip(
+        observable1,
+        observable2
+    )
+    .debug("zip")
     .subscribe()
-    // .disposed(by: disposeBag) // If dispose bag is used instead, sequence will terminate on scope exit
+
+    Observable.combineLatest(
+        observable1,
+        observable2
+    )
+    .debug("combineLatest")
+    .subscribe()
 }
