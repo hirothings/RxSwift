@@ -13,6 +13,8 @@ import RxSwift
  */
 playgroundShouldContinueIndefinitely()
 
+let disposeBag = DisposeBag()
+
 let observable1 = Observable.of("🐶", "🐱", "🐭", "🐹")
 let observable2 = Observable.of(1, 2, 3, 4, 5)
 
@@ -61,4 +63,59 @@ example("[Observable`<Void>`]をObservable<[Void]>に変換する") {
     observables
         .debug("observables")
         .subscribe()
+}
+
+example("Observable.empty()の挙動") {
+    let empty = Observable<String>
+        .empty()
+        .debug("Observable.empty()の挙動")
+
+    empty
+        .ifEmpty(default: "Hiroshi天才")
+        .subscribe(onNext: {
+            print("onNext: ", $0)
+        }, onCompleted: {
+            print("onCompleted􏲄􏲅")
+        }, onDisposed: {
+            print("􏷑􏷒破棄")
+        })
+        .disposed(by: disposeBag)
+}
+
+example("Array + Observable.empty()の挙動") {
+    let array: Array<String> = []
+    let observableFromEmptyArray = Observable.zip(array.map { Observable.just($0) })
+
+    observableFromEmptyArray
+        .ifEmpty(default: ["Hiroshi最高"])
+        .subscribe(onNext: {
+            print("onNext: ", $0)
+        }, onCompleted: {
+            print("onCompleted􏲄􏲅")
+        }, onDisposed: {
+            print("􏷑􏷒破棄")
+        })
+        .disposed(by: disposeBag)
+}
+
+example("Completable") {
+    func cacheLocally() -> Completable {
+        return Completable.create { completable in
+           // Store some data locally
+
+           completable(.completed)
+           return Disposables.create {}
+        }
+    }
+
+    cacheLocally()
+        .subscribe { completable in
+            switch completable {
+                case .completed:
+                    print("Completed with no error")
+                case .error(let error):
+                    print("Completed with an error: \(error.localizedDescription)")
+            }
+        }
+        .disposed(by: disposeBag)
 }
