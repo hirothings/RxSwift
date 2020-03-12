@@ -98,7 +98,7 @@ example("Array + Observable.empty()の挙動") {
         .disposed(by: disposeBag)
 }
 
-example("Completable") {
+example("Completableの挙動1") {
     func cacheLocally() -> Completable {
         return Completable.create { completable in
            // Store some data locally
@@ -117,5 +117,23 @@ example("Completable") {
                     print("Completed with an error: \(error.localizedDescription)")
             }
         }
+        .disposed(by: disposeBag)
+}
+
+example("Completableの挙動2") {
+    let task1 = Completable.create { subscribe -> Disposable in
+        subscribe(.completed)
+        return Disposables.create()
+    }
+
+    let task2 = Single<Int>.create { subscribe -> Disposable in
+        subscribe(.success(1))
+        return Disposables.create()
+    }
+
+    Observable.zip(task1.asObservable(), task2.asObservable())
+        .subscribe(onNext: { _ in
+            print("☀️ ここで何かしたい") // <- task1が.completedしか発火しないため、この処理は呼ばれない
+        })
         .disposed(by: disposeBag)
 }
