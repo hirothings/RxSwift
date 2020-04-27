@@ -1,10 +1,4 @@
-/*:
- > # IMPORTANT: To use **Rx.playground**:
- 1. Open **Rx.xcworkspace**.
- 1. Build the **RxExample-macOS** scheme (**Product** → **Build**).
- 1. Open **Rx** playground in the **Project navigator** (under RxExample project).
- 1. Show the Debug Area (**View** → **Debug Area** → **Show Debug Area**).
- */
+import Foundation
 import RxSwift
 /*:
  # Try Yourself
@@ -15,10 +9,10 @@ playgroundShouldContinueIndefinitely()
 
 let disposeBag = DisposeBag()
 
-let observable1 = Observable.of("🐶", "🐱", "🐭", "🐹")
-let observable2 = Observable.of(1, 2, 3, 4, 5)
-
 example("zipとcombineLatestの違い") {
+    let observable1 = Observable.of("🐶", "🐱", "🐭", "🐹")
+    let observable2 = Observable.of(1, 2, 3, 4, 5)
+
     Observable.zip(
         observable1,
         observable2
@@ -44,7 +38,7 @@ example("任意のdispose") {
         }, onDisposed: {
             print("􏷑􏷒破棄")
         })
-    
+
     subject.onNext("1")
     subject.onNext("2")
     subscription.dispose()
@@ -136,4 +130,48 @@ example("Completableの挙動2") {
             print("☀️ ここで何かしたい") // <- task1が.completedしか発火しないため、この処理は呼ばれない
         })
         .disposed(by: disposeBag)
+}
+
+example("debounceとthrottle") {
+    // 参考: https://qiita.com/dekatotoro/items/be22a241335382ecc16e
+
+    let now = Date()
+    print(now)
+    let observable = Observable<Int>.create { observer in
+        observer.onNext(1)
+        observer.onNext(2)
+        observer.onNext(3)
+
+        sleep(2)
+
+        observer.onNext(4)
+        observer.onNext(5)
+        observer.onNext(6)
+
+        sleep(2)
+
+        observer.onCompleted()
+        return Disposables.create()
+    }
+
+    let scheduler = MainScheduler.instance
+
+    _ = observable
+        .debounce(.seconds(1), scheduler: scheduler) // 3, 6
+        .subscribe(onNext: {
+            print(now.distance(to: Date()))
+            print("debounce: \($0)")
+        })
+
+    _ = observable
+        .throttle(.seconds(1), latest: true, scheduler: scheduler) // 1, 4, 6
+        .subscribe(onNext: {
+            print("throttle true: \($0)")
+        })
+
+    _ = observable
+        .throttle(.seconds(1), latest: false, scheduler: scheduler) // 1, 4
+        .subscribe(onNext: {
+            print("throttle false: \($0)")
+        })
 }
