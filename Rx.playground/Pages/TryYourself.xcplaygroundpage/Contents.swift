@@ -132,46 +132,67 @@ example("Completableの挙動2") {
         .disposed(by: disposeBag)
 }
 
-example("debounceとthrottle") {
+let intervalObservable = Observable<Int>.create { observer in
+    observer.onNext(1)
+    observer.onNext(2)
+    observer.onNext(3)
+
+    sleep(2)
+
+    observer.onNext(4)
+    observer.onNext(5)
+    observer.onNext(6)
+
+    sleep(2)
+
+    observer.onCompleted()
+    return Disposables.create()
+}
+
+example("debounceとthrottle: debounce") {
     // 参考: https://qiita.com/dekatotoro/items/be22a241335382ecc16e
 
     let now = Date()
     print(now)
-    let observable = Observable<Int>.create { observer in
-        observer.onNext(1)
-        observer.onNext(2)
-        observer.onNext(3)
-
-        sleep(2)
-
-        observer.onNext(4)
-        observer.onNext(5)
-        observer.onNext(6)
-
-        sleep(2)
-
-        observer.onCompleted()
-        return Disposables.create()
-    }
 
     let scheduler = MainScheduler.instance
 
-    _ = observable
-        .debounce(.seconds(1), scheduler: scheduler) // 3, 6
+    _ = intervalObservable
+        .debounce(.seconds(1), scheduler: scheduler) // 6
         .subscribe(onNext: {
             print(now.distance(to: Date()))
             print("debounce: \($0)")
         })
+}
 
-    _ = observable
+example("debounceとthrottle: throttle true") {
+    // 参考: https://qiita.com/dekatotoro/items/be22a241335382ecc16e
+
+    let now = Date()
+    print(now)
+
+    let scheduler = MainScheduler.instance
+
+    _ = intervalObservable
         .throttle(.seconds(1), latest: true, scheduler: scheduler) // 1, 4, 6
         .subscribe(onNext: {
+            print(now.distance(to: Date()))
             print("throttle true: \($0)")
         })
+}
 
-    _ = observable
+example("debounceとthrottle: throttle false") {
+    // 参考: https://qiita.com/dekatotoro/items/be22a241335382ecc16e
+
+    let now = Date()
+    print(now)
+
+    let scheduler = MainScheduler.instance
+
+    _ = intervalObservable
         .throttle(.seconds(1), latest: false, scheduler: scheduler) // 1, 4
         .subscribe(onNext: {
+            print(now.distance(to: Date()))
             print("throttle false: \($0)")
         })
 }
